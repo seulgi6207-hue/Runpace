@@ -151,36 +151,35 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
       <span class="label">거리</span>
       <div class="chips" id="distChips"></div>
       <div id="customWrap" hidden>
-        <input class="km" type="number" id="customKm" inputmode="decimal" min="0.1" step="0.1" value="12" aria-label="직접 입력 거리(km)">
+        <input class="km" type="number" id="customKm" inputmode="decimal" min="0.1" step="0.1" placeholder="거리 입력 (km)" aria-label="직접 입력 거리(km)">
       </div>
     </div>
 
     <div class="group" id="timeInputs">
       <span class="label">목표 기록</span>
       <div class="tri">
-        <label class="field"><input type="number" id="h" inputmode="numeric" min="0" max="99" value="2"><span>시간</span></label>
-        <label class="field"><input type="number" id="m" inputmode="numeric" min="0" max="999" value="0"><span>분</span></label>
-        <label class="field"><input type="number" id="s" inputmode="numeric" min="0" max="999" value="0"><span>초</span></label>
+        <label class="field"><input type="number" id="h" inputmode="numeric" min="0" max="99" placeholder="0"><span>시간</span></label>
+        <label class="field"><input type="number" id="m" inputmode="numeric" min="0" max="999" placeholder="0"><span>분</span></label>
+        <label class="field"><input type="number" id="s" inputmode="numeric" min="0" max="999" placeholder="0"><span>초</span></label>
       </div>
-      <div class="chips" id="targetChips" aria-label="자주 쓰는 목표"></div>
     </div>
 
     <div class="group" id="paceInputs" hidden>
       <span class="label">1km당 페이스</span>
       <div class="duo">
-        <label class="field"><input type="number" id="pm" inputmode="numeric" min="0" max="99" value="5"><span>분</span></label>
-        <label class="field"><input type="number" id="ps" inputmode="numeric" min="0" max="999" value="41"><span>초</span></label>
+        <label class="field"><input type="number" id="pm" inputmode="numeric" min="0" max="99" placeholder="0"><span>분</span></label>
+        <label class="field"><input type="number" id="ps" inputmode="numeric" min="0" max="999" placeholder="0"><span>초</span></label>
       </div>
     </div>
   </section>
 
   <section class="panel" aria-live="polite">
     <p class="k" id="resLabel">목표 달성에 필요한 페이스</p>
-    <p class="big"><span class="num" id="resMain">5:41</span><span class="unit" id="resUnit">/km</span></p>
+    <p class="big"><span class="num" id="resMain">--:--</span><span class="unit" id="resUnit">/km</span></p>
     <dl class="stats">
-      <div><dt>속도</dt><dd id="stSpeed">10.5 km/h</dd></div>
-      <div><dt>마일 페이스</dt><dd id="stMile">9:09 /mi</dd></div>
-      <div><dt id="stThirdLabel">완주 기록</dt><dd id="stThird">2:00:00</dd></div>
+      <div><dt>속도</dt><dd id="stSpeed">--</dd></div>
+      <div><dt>마일 페이스</dt><dd id="stMile">--</dd></div>
+      <div><dt id="stThirdLabel">완주 기록</dt><dd id="stThird">--</dd></div>
     </dl>
   </section>
 
@@ -193,7 +192,7 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
       </table>
     </div>
     <p class="empty" id="splitEmpty" hidden>기록과 거리를 입력하면 구간별 통과 시간이 표시됩니다.</p>
-    <p class="note">일정한 페이스로 달린다고 가정한 값입니다. 하프는 21.0975km, 풀은 42.195km로 계산합니다.</p>
+    <p class="note">일정한 페이스로 달린다고 가정한 값입니다. 하프는 21.0975km, 풀은 42.195km로 계산합니다. (앱 버전 5)</p>
   </section>
 </main>
 
@@ -229,13 +228,29 @@ var DIST = {
   'full': { label: '풀',   km: 42.195,  finalLabel: '풀 42.2km' },
   'custom': { label: '직접 입력' }
 };
-var TARGETS = {
-  '5k':   [1200, 1350, 1500, 1800],
-  '10k':  [2700, 3000, 3300, 3600],
-  'half': [5400, 6300, 7200, 8100, 9000],
-  'full': [12600, 14400, 16200, 18000]
-};
-var st = { mode: 'time', dist: 'half' };
+// 거리마다 목표 시간과 페이스를 따로 기억합니다. 처음 열면 아래 기본값에서 시작합니다.
+var MEM_KEY = 'pace-mem-v1';
+var mem = { time: {}, pace: {}, dist: 'half', mode: 'time', km: 0 };
+try {
+  var saved = JSON.parse(localStorage.getItem(MEM_KEY) || 'null');
+  if (saved && typeof saved === 'object') {
+    if (saved.time && typeof saved.time === 'object') mem.time = saved.time;
+    if (saved.pace && typeof saved.pace === 'object') mem.pace = saved.pace;
+    if (DIST[saved.dist]) mem.dist = saved.dist;
+    if (saved.mode === 'time' || saved.mode === 'pace') mem.mode = saved.mode;
+    if (isFinite(saved.km) && saved.km > 0) mem.km = saved.km;
+  }
+} catch (e) {}
+var st = { mode: mem.mode, dist: mem.dist };
+function memTime(d) { var v = mem.time[d]; return v > 0 ? v : 0; }
+function memPace(d) { var v = mem.pace[d]; return v > 0 ? v : 0; }
+function saveMem() {
+  mem.dist = st.dist;
+  mem.mode = st.mode;
+  var k = parseFloat(String($('customKm').value).replace(',', '.'));
+  if (isFinite(k) && k > 0) mem.km = k;
+  try { localStorage.setItem(MEM_KEY, JSON.stringify(mem)); } catch (e) {}
+}
 function $(id) { return document.getElementById(id); }
 
 function num(id, max) {
@@ -252,12 +267,14 @@ function curKm() {
 function timeSec() { return num('h', 99) * 3600 + num('m', 999) * 60 + num('s', 999); }
 function paceIn() { return num('pm', 99) * 60 + num('ps', 999); }
 function setTime(sec) {
+  if (!(sec > 0)) { $('h').value = ''; $('m').value = ''; $('s').value = ''; return; }
   var r = Math.round(sec);
   $('h').value = Math.floor(r / 3600);
   $('m').value = Math.floor((r % 3600) / 60);
   $('s').value = r % 60;
 }
 function setPace(sec) {
+  if (!(sec > 0)) { $('pm').value = ''; $('ps').value = ''; return; }
   var r = Math.round(sec);
   $('pm').value = Math.floor(r / 60);
   $('ps').value = r % 60;
@@ -295,22 +312,6 @@ function render() {
   $('modePace').setAttribute('aria-pressed', String(st.mode === 'pace'));
   $('timeInputs').hidden = st.mode !== 'time';
   $('paceInputs').hidden = st.mode !== 'pace';
-
-  // 목표 기록 빠른 선택
-  var tbox = $('targetChips');
-  tbox.innerHTML = '';
-  var list = st.mode === 'time' ? (TARGETS[st.dist] || []) : [];
-  var cur = timeSec();
-  list.forEach(function (sec) {
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'chip small';
-    b.dataset.sec = sec;
-    b.textContent = fmtTime(sec);
-    b.setAttribute('aria-pressed', String(sec === cur));
-    tbox.appendChild(b);
-  });
-  tbox.hidden = list.length === 0;
 
   // 결과 패널
   if (st.mode === 'time') {
@@ -351,33 +352,52 @@ $('distChips').addEventListener('click', function (e) {
   var b = e.target.closest('.chip');
   if (!b) return;
   st.dist = b.dataset.dist;
-  var defaults = { '5k': 1500, '10k': 3000, 'half': 7200, 'full': 14400 };
-  if (st.mode === 'time' && defaults[st.dist]) setTime(defaults[st.dist]);
-  render();
-});
-$('targetChips').addEventListener('click', function (e) {
-  var b = e.target.closest('.chip');
-  if (!b) return;
-  setTime(Number(b.dataset.sec));
+  setTime(memTime(st.dist));
+  setPace(memPace(st.dist));
+  saveMem();
   render();
 });
 $('modeTime').addEventListener('click', function () {
   if (st.mode === 'time') return;
   var d = curKm(), p = paceIn();
-  if (d > 0 && p > 0) setTime(p * d);
+  if (d > 0 && p > 0) { setTime(p * d); mem.time[st.dist] = Math.round(p * d); }
   st.mode = 'time';
+  saveMem();
   render();
 });
 $('modePace').addEventListener('click', function () {
   if (st.mode === 'pace') return;
   var d = curKm(), t = timeSec();
-  if (d > 0 && t > 0) setPace(t / d);
+  if (d > 0 && t > 0) { setPace(t / d); mem.pace[st.dist] = Math.round(t / d); }
   st.mode = 'pace';
+  saveMem();
   render();
 });
-['h', 'm', 's', 'pm', 'ps', 'customKm'].forEach(function (id) {
-  $(id).addEventListener('input', render);
+['h', 'm', 's'].forEach(function (id) {
+  $(id).addEventListener('input', function () {
+    var t = timeSec();
+    if (t > 0) mem.time[st.dist] = t;
+    saveMem();
+    render();
+  });
 });
+['pm', 'ps'].forEach(function (id) {
+  $(id).addEventListener('input', function () {
+    var p = paceIn();
+    if (p > 0) mem.pace[st.dist] = p;
+    saveMem();
+    render();
+  });
+});
+$('customKm').addEventListener('input', function () {
+  saveMem();
+  render();
+});
+
+// 저장된 값으로 입력칸을 채웁니다.
+$('customKm').value = mem.km > 0 ? mem.km : '';
+setTime(memTime(st.dist));
+setPace(memPace(st.dist));
 
 render();
 
