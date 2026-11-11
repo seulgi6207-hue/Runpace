@@ -93,7 +93,8 @@ h1 { margin: 2px 0 0; font-family: var(--font-display); font-size: 28px; line-he
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-variant-numeric: tabular-nums; }
 .chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
-.chip.small { font-size: 13px; padding: 6px 11px; }
+#distChips { flex-wrap: nowrap; gap: 6px; }
+#distChips .chip { flex: 1 1 auto; min-width: 0; padding: 9px 4px; text-align: center; white-space: nowrap; font-size: clamp(12px, 3.7vw, 14px); }
 
 .tri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .duo { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -157,11 +158,10 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
 
     <div class="group" id="timeInputs">
       <span class="label">목표 기록</span>
-      <div class="tri">
+      <div class="duo">
         <label class="field"><input type="number" id="h" inputmode="numeric" min="0" max="99" placeholder="0"><span>시간</span></label>
         <label class="field"><input type="number" id="m" inputmode="numeric" min="0" max="999" placeholder="0"><span>분</span></label>
-        <label class="field"><input type="number" id="s" inputmode="numeric" min="0" max="999" placeholder="0"><span>초</span></label>
-      </div>
+              </div>
     </div>
 
     <div class="group" id="paceInputs" hidden>
@@ -176,11 +176,6 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
   <section class="panel" aria-live="polite">
     <p class="k" id="resLabel">목표 달성에 필요한 페이스</p>
     <p class="big"><span class="num" id="resMain">--:--</span><span class="unit" id="resUnit">/km</span></p>
-    <dl class="stats">
-      <div><dt>속도</dt><dd id="stSpeed">--</dd></div>
-      <div><dt>마일 페이스</dt><dd id="stMile">--</dd></div>
-      <div><dt id="stThirdLabel">완주 기록</dt><dd id="stThird">--</dd></div>
-    </dl>
   </section>
 
   <section class="splits" aria-label="구간 기록">
@@ -192,7 +187,7 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
       </table>
     </div>
     <p class="empty" id="splitEmpty" hidden>기록과 거리를 입력하면 구간별 통과 시간이 표시됩니다.</p>
-    <p class="note">일정한 페이스로 달린다고 가정한 값입니다. 하프는 21.0975km, 풀은 42.195km로 계산합니다. (앱 버전 5)</p>
+    <p class="note">일정한 페이스로 달린다고 가정한 값입니다. 하프는 21.0975km, 풀은 42.195km로 계산합니다. (앱 버전 6)</p>
   </section>
 </main>
 
@@ -264,14 +259,13 @@ function curKm() {
   }
   return DIST[st.dist].km;
 }
-function timeSec() { return num('h', 99) * 3600 + num('m', 999) * 60 + num('s', 999); }
+function timeSec() { return num('h', 99) * 3600 + num('m', 999) * 60; }
 function paceIn() { return num('pm', 99) * 60 + num('ps', 999); }
 function setTime(sec) {
-  if (!(sec > 0)) { $('h').value = ''; $('m').value = ''; $('s').value = ''; return; }
-  var r = Math.round(sec);
+  if (!(sec > 0)) { $('h').value = ''; $('m').value = ''; return; }
+  var r = Math.round(sec / 60) * 60;
   $('h').value = Math.floor(r / 3600);
   $('m').value = Math.floor((r % 3600) / 60);
-  $('s').value = r % 60;
 }
 function setPace(sec) {
   if (!(sec > 0)) { $('pm').value = ''; $('ps').value = ''; return; }
@@ -318,17 +312,11 @@ function render() {
     $('resLabel').textContent = '목표 달성에 필요한 페이스';
     $('resMain').textContent = fmtPace(ok ? pace : 0);
     $('resUnit').textContent = '/km';
-    $('stThirdLabel').textContent = '완주 기록';
-    $('stThird').textContent = ok ? fmtTime(total) : '--';
   } else {
     $('resLabel').textContent = '예상 완주 기록';
     $('resMain').textContent = ok ? fmtTime(total) : '--:--';
     $('resUnit').textContent = d > 0 ? fmtKm(d) + 'km' : '';
-    $('stThirdLabel').textContent = '1km 페이스';
-    $('stThird').textContent = ok ? fmtPace(pace) + ' /km' : '--';
   }
-  $('stSpeed').textContent = ok ? (3600 / pace).toFixed(1) + ' km/h' : '--';
-  $('stMile').textContent = ok ? fmtPace(pace * 1.609344) + ' /mi' : '--';
 
   // 구간 기록표
   var body = $('splitBody');
@@ -360,7 +348,7 @@ $('distChips').addEventListener('click', function (e) {
 $('modeTime').addEventListener('click', function () {
   if (st.mode === 'time') return;
   var d = curKm(), p = paceIn();
-  if (d > 0 && p > 0) { setTime(p * d); mem.time[st.dist] = Math.round(p * d); }
+  if (d > 0 && p > 0) { setTime(p * d); mem.time[st.dist] = Math.round(p * d / 60) * 60; }
   st.mode = 'time';
   saveMem();
   render();
@@ -373,7 +361,7 @@ $('modePace').addEventListener('click', function () {
   saveMem();
   render();
 });
-['h', 'm', 's'].forEach(function (id) {
+['h', 'm'].forEach(function (id) {
   $(id).addEventListener('input', function () {
     var t = timeSec();
     if (t > 0) mem.time[st.dist] = t;
