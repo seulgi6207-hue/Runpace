@@ -98,15 +98,21 @@ h1 { margin: 2px 0 0; font-family: var(--font-display); font-size: 28px; line-he
 
 .tri { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .duo { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.timebox { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 8px; }
+.colon { font-family: var(--font-display); font-size: 28px; font-weight: 700; line-height: 1; padding-top: 12px; color: var(--muted); }
+.titlerow { display: flex; align-items: center; gap: 10px; }
+.titlerow h1 { min-width: 0; }
+.dolphin { flex: none; }
 .field { display: grid; gap: 4px; min-width: 0; }
 .field span { font-size: 12px; color: var(--muted); text-align: center; }
-input[type="number"] {
+input[type="number"], input.t2 {
   width: 100%; min-width: 0; font-family: var(--font-display); font-size: 28px; font-weight: 700; text-align: center;
   color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 4px;
   font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield;
 }
 input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input.km { font-size: 20px; text-align: left; padding: 10px 12px; }
+input::placeholder { color: var(--muted); opacity: .5; font-weight: 500; }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 
 .panel { background: var(--panel); color: var(--panel-fg); border-radius: 18px; padding: 20px 18px 18px; display: grid; gap: 14px; }
@@ -129,6 +135,15 @@ th:first-child, td:first-child { text-align: left; }
 tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
 .empty { margin: 0; color: var(--muted); }
 .note { margin: 0; font-size: 12px; color: var(--muted); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-weight: 500; padding: 10px 12px; border-radius: 12px; cursor: pointer; text-align: left; }
+.switch-track { flex: none; width: 44px; height: 26px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); position: relative; }
+.switch-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--muted); }
+.switch[aria-checked="true"] .switch-track { background: var(--accent); border-color: var(--accent); }
+.switch[aria-checked="true"] .switch-thumb { left: 20px; background: var(--accent-ink); }
+#progFields { display: grid; gap: 8px; }
+.hint { margin: 0; font-size: 12px; color: var(--muted); }
+.panel .sub { margin: 0; font-size: 14px; color: var(--panel-fg); }
+.panel .sub.warn { color: var(--panel-accent); }
 [hidden] { display: none !important; }
 @media (prefers-reduced-motion: no-preference) {
   .chip, .seg button { transition: background .15s, color .15s; }
@@ -139,8 +154,35 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
 <main>
   <header>
     <p class="eyebrow">RUNNING PACE</p>
-    <h1>러닝 페이스 계산기</h1>
+    <div class="titlerow">
+      <h1>러닝 페이스 계산기</h1>
+      <svg class="dolphin" viewBox="0 0 64 56" width="46" height="40" role="img" aria-label="귀여운 돌고래">
+        <defs>
+          <clipPath id="dBody"><ellipse cx="34" cy="30" rx="22" ry="17"/><ellipse cx="55" cy="33" rx="8" ry="5.5"/></clipPath>
+        </defs>
+        <path d="M13 32 C7 31 3 26 3 21 C8 23 12 25 16 26 Z" fill="#3F8FD8"/>
+        <path d="M13 34 C7 36 4 41 4 46 C9 44 13 42 17 40 Z" fill="#3F8FD8"/>
+        <path d="M30 14 C31 8 37 6 40 8 C37 10 36 13 36 15 Z" fill="#3F8FD8"/>
+        <ellipse cx="34" cy="30" rx="22" ry="17" fill="#5AB0F0"/>
+        <ellipse cx="55" cy="33" rx="8" ry="5.5" fill="#5AB0F0"/>
+        <ellipse cx="38" cy="42" rx="24" ry="10" fill="#EAF6FF" clip-path="url(#dBody)"/>
+        <path d="M30 40 C28 46 31 50 36 50 C35 46 35 43 36 40 Z" fill="#3F8FD8"/>
+        <circle cx="45" cy="27" r="3" fill="#1F2A44"/>
+        <circle cx="46" cy="26" r="1" fill="#FFFFFF"/>
+        <ellipse cx="40" cy="35" rx="3.5" ry="2.2" fill="#FF9FB5" opacity=".8"/>
+        <path d="M50 36 Q54 40 59 36" fill="none" stroke="#1F2A44" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="56" cy="13" r="2" fill="#9AD3FF"/>
+        <circle cx="61" cy="19" r="1.4" fill="#9AD3FF"/>
+        <path d="M14 8 L15.4 11.6 L19 13 L15.4 14.4 L14 18 L12.6 14.4 L9 13 L12.6 11.6 Z" fill="#FFC857"/>
+      </svg>
+    </div>
   </header>
+
+  <section class="panel" aria-live="polite">
+    <p class="k" id="resLabel">목표 달성에 필요한 페이스</p>
+    <p class="big"><span class="num" id="resMain">--:--</span><span class="unit" id="resUnit">/km</span></p>
+    <p class="sub" id="resSub" hidden></p>
+  </section>
 
   <div class="seg" role="group" aria-label="계산 방식">
     <button type="button" id="modeTime" aria-pressed="true">목표 기록 → 페이스</button>
@@ -158,10 +200,23 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
 
     <div class="group" id="timeInputs">
       <span class="label">목표 기록</span>
-      <div class="duo">
-        <label class="field"><input type="number" id="h" inputmode="numeric" min="0" max="99" placeholder="0"><span>시간</span></label>
-        <label class="field"><input type="number" id="m" inputmode="numeric" min="0" max="999" placeholder="0"><span>분</span></label>
-              </div>
+      <div class="timebox">
+        <label class="field"><input class="t2" type="text" id="h" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="hh" aria-label="목표 시간(시)"><span>시간</span></label>
+        <span class="colon" aria-hidden="true">:</span>
+        <label class="field"><input class="t2" type="text" id="m" inputmode="numeric" maxlength="2" autocomplete="off" placeholder="mm" aria-label="목표 시간(분)"><span>분</span></label>
+      </div>
+      <button type="button" class="switch" id="progToggle" role="switch" aria-checked="false">
+        <span>초반 느리게 시작해서 점점 빠르게</span>
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </button>
+      <div id="progFields" hidden>
+        <div class="tri">
+          <label class="field"><input type="number" id="pgk" inputmode="decimal" min="0.5" step="0.5" placeholder="0"><span>초반 km</span></label>
+          <label class="field"><input type="number" id="pgm" inputmode="numeric" min="0" max="99" placeholder="0"><span>시작 분</span></label>
+          <label class="field"><input type="number" id="pgs" inputmode="numeric" min="0" max="999" placeholder="0"><span>시작 초</span></label>
+        </div>
+        <p class="hint">처음 몇 km는 시작 페이스로 달리고, 그 뒤로는 1km마다 일정하게 빨라져서 목표 기록에 맞춰요.</p>
+      </div>
     </div>
 
     <div class="group" id="paceInputs" hidden>
@@ -173,21 +228,17 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
     </div>
   </section>
 
-  <section class="panel" aria-live="polite">
-    <p class="k" id="resLabel">목표 달성에 필요한 페이스</p>
-    <p class="big"><span class="num" id="resMain">--:--</span><span class="unit" id="resUnit">/km</span></p>
-  </section>
-
   <section class="splits" aria-label="구간 기록">
-    <h2>구간 기록</h2>
+    <h2 id="splitTitle">구간 기록</h2>
     <div class="tablewrap" id="splitWrap">
       <table>
-        <thead><tr><th>지점</th><th>구간</th><th>누적</th></tr></thead>
+        <thead id="splitHead"></thead>
         <tbody id="splitBody"></tbody>
       </table>
     </div>
     <p class="empty" id="splitEmpty" hidden>기록과 거리를 입력하면 구간별 통과 시간이 표시됩니다.</p>
-    <p class="note">일정한 페이스로 달린다고 가정한 값입니다. 하프는 21.0975km, 풀은 42.195km로 계산합니다. (앱 버전 6)</p>
+    <p class="note" id="splitNote"></p>
+    <p class="note">(앱 버전 8)</p>
   </section>
 </main>
 
@@ -214,6 +265,33 @@ function splits(paceSec, km) {
   rows.push({ d: km, seg: (km - prev) * paceSec, cum: km * paceSec, final: true });
   return rows;
 }
+// 초반 K km는 시작 페이스 P0(초/km)로 달리고, 그 뒤로는 1km마다 일정하게 빨라져서
+// 전체 D km를 목표 시간 T(초)에 맞추는 계획을 만듭니다.
+function rampPlan(D, T, K, P0) {
+  if (!(D > 0 && T > 0 && K > 0 && P0 > 0)) return { err: 'empty' };
+  if (K >= D) return { err: 'longK' };
+  var R = D - K, Trem = T - P0 * K;
+  if (Trem <= 0) return { err: 'tooSlow' };
+  var g = 2 * (P0 * R - Trem) / (R * R);
+  if (g < 0) return { err: 'notFaster' };
+  var pEnd = 2 * Trem / R - P0;
+  if (pEnd < 150) return { err: 'tooFast' };
+  function F(x) {
+    if (x <= K) return P0 * x;
+    var u = x - K;
+    return P0 * K + P0 * u - g * u * u / 2;
+  }
+  var pts = [];
+  for (var d = 1; d < D - 1e-9; d += 1) pts.push(d);
+  pts.push(D);
+  var rows = [], prevD = 0, prevCum = 0, prevR = 0;
+  pts.forEach(function (x, i) {
+    var cum = F(x), cr = Math.round(cum);
+    rows.push({ d: x, len: x - prevD, pace: (cum - prevCum) / (x - prevD), seg: cr - prevR, cum: cr, final: i === pts.length - 1 });
+    prevD = x; prevCum = cum; prevR = cr;
+  });
+  return { rows: rows, g: g, pEnd: pEnd };
+}
 /*END*/
 
 var DIST = {
@@ -225,7 +303,14 @@ var DIST = {
 };
 // 거리마다 목표 시간과 페이스를 따로 기억합니다. 처음 열면 아래 기본값에서 시작합니다.
 var MEM_KEY = 'pace-mem-v1';
-var mem = { time: {}, pace: {}, dist: 'half', mode: 'time', km: 0 };
+var PLAN_MSG = {
+  empty: '초반 거리와 시작 페이스를 입력하세요.',
+  longK: '초반 거리는 전체 거리보다 짧아야 해요.',
+  tooSlow: '초반 구간만으로 목표 기록을 넘어요. 시작 페이스를 빠르게 하거나 초반 거리를 줄여 주세요.',
+  notFaster: '목표 평균 페이스가 시작 페이스보다 느려서 빨라질 필요가 없어요. 시작 페이스를 더 느리게 잡아 주세요.',
+  tooFast: '뒤로 갈수록 페이스가 너무 빨라져요. 시작 페이스를 더 빠르게 하거나 초반 거리를 줄여 주세요.'
+};
+var mem = { time: {}, pace: {}, dist: 'half', mode: 'time', km: 0, prog: false, pk: {}, pp: {} };
 try {
   var saved = JSON.parse(localStorage.getItem(MEM_KEY) || 'null');
   if (saved && typeof saved === 'object') {
@@ -234,14 +319,20 @@ try {
     if (DIST[saved.dist]) mem.dist = saved.dist;
     if (saved.mode === 'time' || saved.mode === 'pace') mem.mode = saved.mode;
     if (isFinite(saved.km) && saved.km > 0) mem.km = saved.km;
+    if (saved.prog === true) mem.prog = true;
+    if (saved.pk && typeof saved.pk === 'object') mem.pk = saved.pk;
+    if (saved.pp && typeof saved.pp === 'object') mem.pp = saved.pp;
   }
 } catch (e) {}
-var st = { mode: mem.mode, dist: mem.dist };
+var st = { mode: mem.mode, dist: mem.dist, prog: mem.prog };
 function memTime(d) { var v = mem.time[d]; return v > 0 ? v : 0; }
 function memPace(d) { var v = mem.pace[d]; return v > 0 ? v : 0; }
+function memPK(d) { var v = mem.pk[d]; return v > 0 ? v : 0; }
+function memPP(d) { var v = mem.pp[d]; return v > 0 ? v : 0; }
 function saveMem() {
   mem.dist = st.dist;
   mem.mode = st.mode;
+  mem.prog = !!st.prog;
   var k = parseFloat(String($('customKm').value).replace(',', '.'));
   if (isFinite(k) && k > 0) mem.km = k;
   try { localStorage.setItem(MEM_KEY, JSON.stringify(mem)); } catch (e) {}
@@ -261,11 +352,27 @@ function curKm() {
 }
 function timeSec() { return num('h', 99) * 3600 + num('m', 999) * 60; }
 function paceIn() { return num('pm', 99) * 60 + num('ps', 999); }
+function progKm() {
+  var v = parseFloat(String($('pgk').value).replace(',', '.'));
+  return isFinite(v) && v > 0 ? Math.min(v, 1000) : 0;
+}
+function progPace() { return num('pgm', 99) * 60 + num('pgs', 999); }
+function setProg(k, p) {
+  $('pgk').value = k > 0 ? k : '';
+  if (p > 0) {
+    var r = Math.round(p);
+    $('pgm').value = Math.floor(r / 60);
+    $('pgs').value = r % 60;
+  } else {
+    $('pgm').value = '';
+    $('pgs').value = '';
+  }
+}
 function setTime(sec) {
   if (!(sec > 0)) { $('h').value = ''; $('m').value = ''; return; }
   var r = Math.round(sec / 60) * 60;
-  $('h').value = Math.floor(r / 3600);
-  $('m').value = Math.floor((r % 3600) / 60);
+  $('h').value = pad(Math.floor(r / 3600));
+  $('m').value = pad(Math.floor((r % 3600) / 60));
 }
 function setPace(sec) {
   if (!(sec > 0)) { $('pm').value = ''; $('ps').value = ''; return; }
@@ -307,8 +414,36 @@ function render() {
   $('timeInputs').hidden = st.mode !== 'time';
   $('paceInputs').hidden = st.mode !== 'pace';
 
+  // 점진적 가속 계획 (기록 → 페이스 탭에서만)
+  var prog = st.mode === 'time' && !!st.prog;
+  $('progToggle').hidden = st.mode !== 'time';
+  $('progToggle').setAttribute('aria-checked', String(!!st.prog));
+  $('progFields').hidden = !prog;
+  var plan = null, planMsg = '';
+  if (prog) {
+    plan = rampPlan(d, total, progKm(), progPace());
+    planMsg = plan.err ? PLAN_MSG[plan.err] : '';
+  }
+  var sub = $('resSub');
+  sub.hidden = true;
+  sub.classList.remove('warn');
+
   // 결과 패널
-  if (st.mode === 'time') {
+  if (prog) {
+    $('resLabel').textContent = '평균 페이스';
+    $('resMain').textContent = fmtPace(ok ? pace : 0);
+    $('resUnit').textContent = '/km';
+    if (plan.err) {
+      if (ok) {
+        sub.textContent = planMsg;
+        sub.classList.toggle('warn', plan.err !== 'empty');
+        sub.hidden = false;
+      }
+    } else {
+      sub.textContent = '초반 ' + fmtPace(progPace()) + ' → 마지막 ' + fmtPace(plan.pEnd) + ' /km';
+      sub.hidden = false;
+    }
+  } else if (st.mode === 'time') {
     $('resLabel').textContent = '목표 달성에 필요한 페이스';
     $('resMain').textContent = fmtPace(ok ? pace : 0);
     $('resUnit').textContent = '/km';
@@ -321,14 +456,30 @@ function render() {
   // 구간 기록표
   var body = $('splitBody');
   body.innerHTML = '';
-  $('splitWrap').hidden = !ok;
-  $('splitEmpty').hidden = ok;
-  if (ok) {
+  var showTable = prog ? (ok && !plan.err) : ok;
+  $('splitWrap').hidden = !showTable;
+  $('splitEmpty').hidden = showTable;
+  $('splitEmpty').textContent = prog && ok ? planMsg : '기록과 거리를 입력하면 구간별 통과 시간이 표시됩니다.';
+  $('splitTitle').textContent = prog ? '구간별 페이스' : '구간 기록';
+  $('splitHead').innerHTML = prog
+    ? '<tr><th>지점</th><th>구간 페이스 (/km)</th><th>누적</th></tr>'
+    : '<tr><th>지점</th><th>구간</th><th>누적</th></tr>';
+  $('splitNote').textContent = (prog
+    ? '초반은 시작 페이스로 달리고 이후 1km마다 일정하게 빨라지는 계획이에요. 페이스는 각 구간의 평균입니다. '
+    : '일정한 페이스로 달린다고 가정한 값입니다. ') + '하프는 21.0975km, 풀은 42.195km로 계산합니다.';
+  function rowLabel(r) { return r.final && DIST[st.dist].finalLabel ? DIST[st.dist].finalLabel : fmtKm(r.d) + 'km'; }
+  if (showTable && prog) {
+    plan.rows.forEach(function (r) {
+      var tr = document.createElement('tr');
+      if (r.final) tr.className = 'final';
+      tr.innerHTML = '<td>' + rowLabel(r) + '</td><td>' + fmtPace(r.pace) + '</td><td>' + fmtTime(r.cum) + '</td>';
+      body.appendChild(tr);
+    });
+  } else if (showTable) {
     splits(pace, d).forEach(function (r) {
       var tr = document.createElement('tr');
       if (r.final) tr.className = 'final';
-      var label = r.final && DIST[st.dist].finalLabel ? DIST[st.dist].finalLabel : fmtKm(r.d) + 'km';
-      tr.innerHTML = '<td>' + label + '</td><td>' + fmtTime(r.seg) + '</td><td>' + fmtTime(r.cum) + '</td>';
+      tr.innerHTML = '<td>' + rowLabel(r) + '</td><td>' + fmtTime(r.seg) + '</td><td>' + fmtTime(r.cum) + '</td>';
       body.appendChild(tr);
     });
   }
@@ -342,6 +493,7 @@ $('distChips').addEventListener('click', function (e) {
   st.dist = b.dataset.dist;
   setTime(memTime(st.dist));
   setPace(memPace(st.dist));
+  setProg(memPK(st.dist), memPP(st.dist));
   saveMem();
   render();
 });
@@ -362,7 +514,13 @@ $('modePace').addEventListener('click', function () {
   render();
 });
 ['h', 'm'].forEach(function (id) {
+  $(id).addEventListener('focus', function () { this.select(); });
   $(id).addEventListener('input', function () {
+    var el = $(id);
+    var v = el.value.replace(/\D/g, '').slice(0, 2);
+    if (id === 'm' && parseInt(v, 10) > 59) v = '59';
+    if (el.value !== v) el.value = v;
+    if (id === 'h' && v.length === 2) $('m').focus();
     var t = timeSec();
     if (t > 0) mem.time[st.dist] = t;
     saveMem();
@@ -382,10 +540,26 @@ $('customKm').addEventListener('input', function () {
   render();
 });
 
+$('progToggle').addEventListener('click', function () {
+  st.prog = !st.prog;
+  saveMem();
+  render();
+});
+['pgk', 'pgm', 'pgs'].forEach(function (id) {
+  $(id).addEventListener('input', function () {
+    var k = progKm(), p = progPace();
+    if (k > 0) mem.pk[st.dist] = k;
+    if (p > 0) mem.pp[st.dist] = p;
+    saveMem();
+    render();
+  });
+});
+
 // 저장된 값으로 입력칸을 채웁니다.
 $('customKm').value = mem.km > 0 ? mem.km : '';
 setTime(memTime(st.dist));
 setPace(memPace(st.dist));
+setProg(memPK(st.dist), memPP(st.dist));
 
 render();
 
