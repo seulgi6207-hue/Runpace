@@ -238,7 +238,7 @@ tr.final td { font-weight: 700; border-top: 2px solid var(--accent); }
     </div>
     <p class="empty" id="splitEmpty" hidden>기록과 거리를 입력하면 구간별 통과 시간이 표시됩니다.</p>
     <p class="note" id="splitNote"></p>
-    <p class="note">(앱 버전 8)</p>
+    <p class="note">(앱 버전 9)</p>
   </section>
 </main>
 
@@ -282,7 +282,8 @@ function rampPlan(D, T, K, P0) {
     return P0 * K + P0 * u - g * u * u / 2;
   }
   var pts = [];
-  for (var d = 1; d < D - 1e-9; d += 1) pts.push(d);
+  var step = D <= 10 ? 1 : 5;
+  for (var d = step; d < D - 1e-9; d += step) pts.push(d);
   pts.push(D);
   var rows = [], prevD = 0, prevCum = 0, prevR = 0;
   pts.forEach(function (x, i) {
@@ -462,7 +463,7 @@ function render() {
   $('splitEmpty').textContent = prog && ok ? planMsg : '기록과 거리를 입력하면 구간별 통과 시간이 표시됩니다.';
   $('splitTitle').textContent = prog ? '구간별 페이스' : '구간 기록';
   $('splitHead').innerHTML = prog
-    ? '<tr><th>지점</th><th>구간 페이스 (/km)</th><th>누적</th></tr>'
+    ? '<tr><th>지점</th><th>구간 평균 페이스 (/km)</th><th>누적</th></tr>'
     : '<tr><th>지점</th><th>구간</th><th>누적</th></tr>';
   $('splitNote').textContent = (prog
     ? '초반은 시작 페이스로 달리고 이후 1km마다 일정하게 빨라지는 계획이에요. 페이스는 각 구간의 평균입니다. '
